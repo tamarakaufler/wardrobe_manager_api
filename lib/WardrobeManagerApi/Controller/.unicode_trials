@@ -1,0 +1,413 @@
+package WardrobeManagerApi::Controller::Helper::Api;
+
+=head2 WardrobeManagerApi::Controller::Helper::Api
+
+helper library for Controllers
+
+=cut
+
+use strict;
+use warnings;
+use v5.018;
+use utf8;
+use open ':encoding(utf8)';
+
+use Lingua::EN::Inflect     qw(PL);
+use Scalar::Util            qw(blessed);
+use JSON                    qw(from_json decode_json);
+use Encode                  qw(decode encode);
+use Text::CSV::Auto;
+
+use Data::Dumper qw(Dumper);
+
+$ENV{DBIC_TRACE} = 1;
+
+require Exporter;
+our @ISA       = qw(Exporter);
+our @EXPORT_OK = qw(
+                    get_clothing_summary
+                    get_listing
+
+                    process_csv_upload
+                    process_json_upload
+
+                    create_entity
+                    update_entity
+                    delete_entity
+
+                    throws_error
+                    error_exists
+                 );
+
+# --------------------------------- PUBLIC METHODS ---------------------------------
+
+=head2 Public methods
+
+used by Controllers
+
+    get_clothing_summary
+    get_listing
+
+    process_csv_upload
+    process_json_upload
+
+    create_entity
+    update_entity
+    delete_entity
+
+    throws_error
+    error_exists
+
+=cut
+
+
+=head3 get_clothing_summary
+
+retrieves all clothings and their related information
+about categories and outfits
+
+=cut
+
+sub get_clothing_summary {
+    my ($c) = @_;
+
+    my $response_data = [];
+    eval {
+        my $clothings_rs  = $c->model('WardrobeManagerApiDB::Clothing')
+                              ->search({}, { prefetch => { 'category' }});
+    
+        while (my $clothing_data = $clothings_rs->next) {
+            push @$response_data, { clothing => $clothing_data->get_summary() }; 
+        }
+
+    };
+    if ($@) {
+        my $error = { error => { status  => 'status_bad_request', 
+                                 message => "Problems with retrieving clothing data: " . substr($@, 0, 160 ), }
+                    };
+        return $error;
+    }
+
+    return $response_data;
+}
+
+=head3 process_csv_upload
+
+csv file contains:
+        clothing name, category name headers
+
+IN:     Catalyst object
+        Upload object
+
+OUT:    on success: 1
+        on error:   { error => { status => ... , message => ... } }
+
+=cut
+
+sub process_csv_upload {
+    my ($c, $upload) = @_; 
+
+    my $created_categories = [];
+    my $created_clothings  = [];
+    eval {
+        my $filepath = $upload->tempname;
+        my $auto = Text::CSV::Auto->new($filepath);
+
+        $auto->process(sub { 
+            my ($row) = @_;  
+
+            my ($category, $clothing, $uri) = @_;
+
+            $category = create_entity($c, 'category', { name => $row->{clothing_category}});
+            die $category if ref $category eq 'HASH';
+
+            $uri = $c->uri_for("/api/category/id/" . $category->id)->as_string;
+            push @$created_categories, $uri;
+
+            #$clothing = create_related_entity($category, 'clothings', { name => $row->{clothing_name}});
+            $clothing = $category->find_or_create_related('clothings', { name => $row->{clothing_name}});
+            die $clothing if ref $clothing eq 'HASH';
+
+            $uri = $c->uri_for("/api/clothing/id/" . $clothing->id)->as_string;
+            push @$created_clothings, $uri;
+        });
+    };
+    if ($@) {
+        my $error = { error => { status  => 'status_bad_request', 
+                                 message => "There were problems with processing your data: " . substr($@, 0, 160 ), }
+                    };
+        return $error;
+    }
+
+    return { category => $created_categories, clothing => $created_clothings };
+}
+
+=head3 process_json_upload
+
+json file contains an array of hashes
+
+=cut
+
+sub process_json_upload {
+    my ($c, $fh) = @_; 
+
+    my $created_entities = [];
+    my $type = $c->stash->{ entity_type };
+
+    eval {
+        local $/; 
+        binmode $fh;
+
+        my $encoded = <$fh>;
+        chomp $encoded;
+        #my $data = from_json(decode('utf8', $encoded));
+        #Encode::_utf8_off($encoded);
+
+        say STDERR 'Serialized input' . $encoded;
+
+        my $decoded = decode_it($encoded);
+say STDERR 'a) decode_it: ' .  Dumper($decoded);
+
+my $djson = decode_json($encoded);
+say STDERR 'b) decode_json: ' . Dumper($djson);
+
+        my $data = from_json($decoded);
+say STDERR 'decode_it->from_json' . Dumper($data);
+
+        $data = from_json($encoded);
+say STDERR 'from_json' . Dumper($data);
+
+        for my $props (@$data) {
+            my $entity   = create_entity($c, $type, $props);
+            die $entity->{ message } unless blessed $entity;
+
+            my $uri = $c->uri_for("/api/$type/id/" . $entity->id)->as_string;
+            push @$created_entities, $uri;
+        }
+    };
+    if ($@) {
+        return { error => { status  => 'status_bad_request',
+                            message => "There were problems with processing your data: " . substr($@, 0, 160 ), }
+        }
+    }
+
+    return { $type => $created_entities };
+}
+
+=head3 get_listing
+
+IN:     Catalyst object
+        entity type
+        search parameters (arrayref)
+
+OUT:    hashref response
+=cut
+
+sub get_listing {
+    my ($c, $type, $params) = @_;
+
+    my @rows = ();
+    my $source = ucfirst( lc $type );
+    eval {
+        my $search_option = _process_search_params($c, $type, $params);
+        @rows  = $c->model("WardrobeManagerApiDB::$source")
+                   ->search( $search_option->{where},
+                             $search_option->{join});
+    
+    };
+    if ($@) {
+        my $error = { error => { status  => 'status_bad_request', 
+                                 message => "Problems with retrieving $source data: " . substr($@, 0, 160 ), }
+                    };
+        return $error;
+    }
+
+    my $entities = _massage4output($c, $type, \@rows);
+}
+
+=head3 create_entity
+
+IN:     Catalyst object
+        entity type
+        entity properties
+
+OUT:    response as a hashref structure:    containing a link to the created entity
+
+=cut
+
+sub create_entity {
+    my ($c, $type, $data) = @_;
+
+    my $entity = $c->model('WardrobeManagerApiDB::' . ucfirst(lc $type))
+                   ->find_or_create($data);
+
+    return $entity;
+}
+
+##=head3 create_related_entity
+##
+##IN:     entity
+##        relationship (will be used in create_related)
+##        related entity properties
+##
+##OUT:    response as a hashref structure:    containing a link to the created entity
+##
+##=cut
+##
+##sub create_related_entity {
+##    my ($entity, $rel, $data) = @_;
+##
+##    my $related = $entity->find_or_create_related($rel, $data);
+##    return $related;
+##
+##}
+
+sub update_entity {
+    my ($c, $type, $data) = @_;
+}
+
+sub delete_entity {
+    my ($c, $type, $id) = @_;
+}
+
+=head3 throws_error
+
+sets up a REST error response
+
+IN:	Controller object
+	Catalyst   object
+	data structure that can be a hashref and contain error key
+OUT:	undef on no errors
+	array with status and message info
+
+=cut
+
+sub throws_error {
+    my ($self, $c, $response ) = @_;
+
+    my $error = error_exists($response);
+
+    if ( $error ) {
+
+        my ( $status, $message ) = ( $error->{ error }{ status }, $error->{ error }{ message } );
+        $self->$status(
+                            $c, 
+                            message => $message,
+                      );  
+        $c->detach();
+     }   
+
+}
+
+=head3 error_exists
+
+IN:	hashref or arrayref
+OUT:	undefined/error data structure 
+
+=cut
+
+sub error_exists {
+    my ($data) = @_;
+
+    if ( ref $data eq 'HASH' && exists $data->{ error } ) {
+        return $data;
+    }
+
+    return;
+}
+
+# --------------------------------- PRIVATE METHODS ---------------------------------
+
+=head3 Private methods
+
+    _massage4output 
+    _get_properties 
+    _process_search_params 
+    _transform_to_hashref 
+
+=cut
+
+sub _massage4output {
+    my ($c, $type, $rows) = @_;
+
+    my @massaged   = ();
+    my $properties = _get_properties($c, $type);
+
+    for my $row (@$rows) {
+        my %massaged = ();
+
+        for my $prop (@$properties) {
+            my $column = $prop->{name};
+            $massaged{$column} = ($prop->{is_rel}) ? $row->$column->name : $row->$column;
+        }
+        push @massaged, \%massaged;
+    }
+
+    return \@massaged;
+}
+
+sub _get_properties {
+    my ($c, $type) = @_;
+
+    my $table_schema  = $c->model('WardrobeManagerApiDB')->source(ucfirst($type));
+    my @columns = map { { name => $_, is_rel => $table_schema->has_relationship($_) } } $table_schema->columns;
+
+    return \@columns;
+}
+
+sub _process_search_params {
+    my ($c, $type, $search_option) = @_;
+
+    $search_option = _transform_to_hashref($search_option) if ref ($search_option) eq 'ARRAY';
+
+    my $schema  = $c->model('WardrobeManagerApiDB')->source(ucfirst $type);
+    my @columns = $schema->columns;
+
+    my $where = {};
+    my $join  = [];
+
+    for my $column (@columns) {
+        if (exists $search_option->{$column}) {
+            $where->{"me.$column"} = $search_option->{$column};
+        }
+    }
+    for my $field (keys $search_option) {
+        my $m2m_rel = "${type}_" . PL($field);
+
+        if ($schema->has_relationship($m2m_rel)) {
+            push @$join, $m2m_rel;
+            $where->{"$m2m_rel.$field"} = $search_option->{$field};
+        }
+    }
+    my $search = { where => $where, join => { join => $join } };
+
+    return $search;
+}
+
+sub _transform_to_hashref {
+    my ($search_option) = @_;
+
+    return $search_option unless ref ($search_option) eq 'ARRAY';
+
+    my $transformed = {};
+    while (scalar @$search_option) {
+        my ($key, $value) = (shift @$search_option, shift @$search_option);
+        $transformed->{$key} = $value if defined $key && defined $value;
+    }
+
+    return $transformed;
+}
+
+sub decode_it {
+  my $s = shift;
+  eval {
+    $s = decode('UTF-8', $s, 1);
+    1;
+  } or do {
+    $s = decode('latin1', $s, 1);
+  };
+  return $s;
+}
+
+
+1;
