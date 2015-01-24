@@ -10,6 +10,7 @@ __PACKAGE__->config(
         dsn => 'dbi:mysql:wardrobeapi',
         user => 'wardrobeapi',
         password => 'funsecret',
+        mysql_enable_utf8 => 1,
     }
 );
 
