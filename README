@@ -82,7 +82,7 @@ POST:
     curl -X GET  http://localhost:3010/api/outfit
 
     curl -H "Accept: application/json" -H "Content-type: application/json" -X POST -d '{"name":"Trousers"}'  http://localhost:3010/api/category
-    curl -X POST -T tagging2.json  http://localhost:3010/tag/clothes
+    curl -X POST -T tagging2.json  http://localhost:3010/tag/clothing
 
 2) Retrieval of a list of clothes, their categories and associated outfits
     curl -X GET  http://localhost:3010/api
