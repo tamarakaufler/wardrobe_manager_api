@@ -15,7 +15,6 @@ requires 'Catalyst::Plugin::Static::Simple';
 requires 'Catalyst::Action::RenderView';
 
 requires 'Catalyst::Controller::REST';
-requires 'Catalyst::View::CSV ';
 requires 'JSON';
 requires 'Text::CSV::Auto';
 requires 'Lingua::EN::Inflect';
