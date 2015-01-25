@@ -400,7 +400,18 @@ sub _massage4output {
 
         for my $prop (@$properties) {
             my $column = $prop->{name};
-            $massaged{$column} = ($prop->{is_rel}) ? $row->$column->name : $row->$column;
+
+            if ($prop->{is_rel}) {
+                my $source = _type2table( $column );
+                my $rel_schema  = $c->model('WardrobeManagerApiDB')->source($source);
+            
+                my @rel_columns = $rel_schema->columns;
+                $massaged{$column} = { map { $_ => $row->$column->$_ } @rel_columns };
+            }
+            else {
+                $massaged{$column} = $row->$column;
+            }
+
         }
         push @massaged, \%massaged;
     }
