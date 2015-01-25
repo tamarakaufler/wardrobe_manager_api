@@ -11,10 +11,9 @@ use warnings;
 use v5.018;
 
 use utf8;
+use feature 'unicode_strings';
+
 use open ':encoding(UTF-8)';
-binmode STDIN,  ':encoding(UTF-8)';
-binmode STDOUT, ':encoding(UTF-8)';
-binmode STDERR, ':encoding(UTF-8)';
 
 use Lingua::EN::Inflect     qw(PL);
 use Scalar::Util            qw(blessed);

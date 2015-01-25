@@ -49,23 +49,12 @@ MySQL
 PROVIDED FUNCTIONALITY
 
 The application does not, currently, provide all the required functionality, and there is scope for improvement in what is provided.
-Also, you may experience, in certain situations, slight hickups when using various functionalities. 
 
 1) CRud for clothing/category/outfit ... search (by id and name) and creation so far
                                                 currently search by only full name, no fuzzy search 
 2) Retrieval of a list of clothes, their categories and associated outfits
 3) Tagging of clothes(clothing_outfit)
 4) clothing and categories can be created by uploading a CSV or JSON file. Format of the JSON file can be a hash or an array of hashes.
-
-    CAVEAT
-    
-    I ran into problems when dealing with unicode. I believe all is setup correctly but creating items with unicode name and search for such items does not work. In the end I set up the Wardrobe Management application with GUI, that I implemented a while ago, which was working last time I tried it (some time last year). On upload of a file containing special character, the application broke:
-
-        "Cannot decode string with wide characters at /usr/local/share/perl/5.18.2/Text/CSV/Encoded/Coder/Encode.pm ....
-
-From what I understand after a bit of googling, there is a bug in the CPAN module. I spent some time trying to understand whether 
-the problem is in my code and setup or find a workaround for the bug. Sadly, given the limited time, I was not successful. 
-Therefore, the RESTful calls do not work with names with wide characters.  
 
 DESIGN
 
@@ -86,9 +75,11 @@ GET:
 POST:
 1) CRud for clothing/category/outfit ... search (by id and name) and creation so far
     curl -X GET  http://localhost:3010/api/clothing/id/3
+    curl -X GET  http://localhost:3010/api/clothing/outfit/3
     curl -X GET  http://localhost:3010/api/clothing/name/iRun%20White%20Trainers
     curl -X GET  http://localhost:3010/api/category/name/Shoes
     curl -X GET  http://localhost:3010/api/outfit/id/3
+    curl -X GET  http://localhost:3010/api/outfit
 
     curl -H "Accept: application/json" -H "Content-type: application/json" -X POST -d '{"name":"Trousers"}'  http://localhost:3010/api/category
     curl -X POST -T tagging2.json  http://localhost:3010/tag/clothes
@@ -119,18 +110,18 @@ POST:
 LIMITATIONS
 
 1) No fuzzy search
-2) The application does not work with Unicode multibyte characters
-3) No unit tests
-4) Limited documentation
+2) No unit tests
+3) Limited documentation
 
 IMPROVEMENTS 
 
 1) Add fuzzy search
-2) Fix Unicode issue
-3) Add crUD functionality (update/delete)
+2) Add crUD functionality (update/delete)
+3) When creating new entities, use find and create separately rather than find_or_create and output only created entities
 4) Write unit tests
 5) Add authentication/authorization
 6) Add caching to improve performace
 7) Add more POD
-8) Could have used Try::Tiny
+8) Add versioning
+9) Could have used Try::Tiny
 

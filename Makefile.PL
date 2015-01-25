@@ -18,7 +18,6 @@ requires 'Catalyst::Controller::REST';
 requires 'Catalyst::View::CSV ';
 requires 'JSON';
 requires 'Text::CSV::Auto';
-requires 'Text::CSV::Encoded';
 requires 'Lingua::EN::Inflect';
 
 requires 'Moose';
