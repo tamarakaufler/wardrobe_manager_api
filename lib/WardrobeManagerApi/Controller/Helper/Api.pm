@@ -11,8 +11,6 @@ use warnings;
 use v5.018;
 
 use utf8;
-use feature 'unicode_strings';
-
 use open ':encoding(UTF-8)';
 
 use Lingua::EN::Inflect     qw(PL);
@@ -398,6 +396,9 @@ sub _massage4output {
     for my $row (@$rows) {
         my %massaged = ();
 
+        my $uri = $c->uri_for("/api/$type/id/" . $row->id)->as_string;
+        $massaged{link} = $uri;
+
         for my $prop (@$properties) {
             my $column = $prop->{name};
 
@@ -406,10 +407,13 @@ sub _massage4output {
                 my $rel_schema  = $c->model('WardrobeManagerApiDB')->source($source);
             
                 my @rel_columns = $rel_schema->columns;
-                $massaged{$column} = { map { $_ => $row->$column->$_ } @rel_columns };
+                $massaged{properties}{$column} = { map { $_ => $row->$column->$_ } @rel_columns };
+
+                $uri = $c->uri_for("/api/$column/id/" . $row->$column->id)->as_string;
+                $massaged{properties}{$column}{link} = $uri;
             }
             else {
-                $massaged{$column} = $row->$column;
+                $massaged{properties}{$column} = $row->$column;
             }
 
         }

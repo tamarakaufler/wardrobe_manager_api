@@ -54,8 +54,6 @@ sub index :Path :Args(0) {
                         $c,
                         entity => $response_data,
                     );
-    
-    
 }
 
 =head2 api
