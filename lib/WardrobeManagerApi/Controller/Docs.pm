@@ -69,9 +69,15 @@ sub docs  :Path('/docs')   :ActionClass('REST'){
             # we need to detach otherwise we continue into docs_GET
             $c->detach();
         }
-
         $c->stash->{ entity_type } = $type;
-
+    }
+    else {
+        $self->status_bad_request(
+                                    $c,
+                                    message => "Usage: http://.../docs/clothing or http://.../docs/category or http://.../docs/outfit or http://.../docs/clothing_outfit",
+                               );
+        # we need to detach otherwise we continue into docs_GET
+        $c->detach();
     }
 
 }
