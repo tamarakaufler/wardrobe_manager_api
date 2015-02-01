@@ -81,6 +81,8 @@ GET:
     curl -X GET  http://localhost:3010/api/clothing/id/3
     curl -X GET  http://localhost:3010/api/clothing/outfit/3
     curl -X GET  http://localhost:3010/api/clothing/name/iRun%20White%20Trainers
+    curl -X GET  http://localhost:3010/api/clothing/name/%Trainers    (fuzzy search)
+    curl -X GET  http://localhost:3010/api/clothing/name/Nice™%       (fuzzy search)
     curl -X GET  http://localhost:3010/api/category/name/Shoes
     curl -X GET  http://localhost:3010/api/outfit/id/3
     curl -X GET  http://localhost:3010/api/outfit
