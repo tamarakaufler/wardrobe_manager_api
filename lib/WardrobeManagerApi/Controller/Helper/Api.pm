@@ -420,8 +420,13 @@ sub _massage4output {
             }
 
         }
+
+        # Add documentation link
+        $massaged{docs} = $c->uri_for("/docs/$type")->as_string;
+
         push @massaged, \%massaged;
     }
+
 
     return \@massaged;
 }

@@ -92,8 +92,6 @@ sub docs_GET {
     my $method = $c->stash->{ entity_type } . '_api_doc';
     my $help = $docs->$method;
 
-say STDERR $help;
-
     $self->status_ok(
                         $c,
                         entity => { examples => $help },
