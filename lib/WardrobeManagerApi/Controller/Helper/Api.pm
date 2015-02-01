@@ -13,12 +13,15 @@ use v5.018;
 use utf8;
 use open ':encoding(UTF-8)';
 
-use Lingua::EN::Inflect     qw(PL);
-use Scalar::Util            qw(blessed);
-use JSON                    qw(from_json);
+use Lingua::EN::Inflect         qw(PL);
+use Lingua::EN::Inflect::Number qw(to_S);
+use Scalar::Util                qw(blessed);
+use JSON                        qw(from_json);
 use Text::CSV::Auto;
 use URI::Escape;
 
+$|++;
+use Data::Dumper qw (Dumper);
 $ENV{DBIC_TRACE} = 1;
 
 require Exporter;
@@ -394,7 +397,7 @@ sub _massage4output {
     my ($c, $type, $rows) = @_;
 
     my @massaged   = ();
-    my $properties = _get_properties($c, $type);
+    my ($properties, $m2m_rels) = _get_properties($c, $type);
 
     for my $row (@$rows) {
         my %massaged = ();
@@ -402,6 +405,7 @@ sub _massage4output {
         my $uri = $c->uri_for("/api/$type/id/" . $row->id)->as_string;
         $massaged{link} = $uri;
 
+        ## TODO: extract into a separate sub
         for my $prop (@$properties) {
             my $column = $prop->{name};
 
@@ -421,7 +425,35 @@ sub _massage4output {
 
         }
 
-        # Add documentation link
+        my @m2m_rel_properties = ();
+
+        ## TODO: extract into a separate sub
+        for my $rel_name (@$m2m_rels) {
+            # meta info
+            my $rel_table   = to_S($rel_name);
+
+            # skip for bridging table (for many-2-many relationships)
+            next if $rel_table eq $type;
+
+            my $source      = _type2table($rel_table);
+            my $rel_schema  = $c->model('WardrobeManagerApiDB')->source($source);
+            my @rel_columns = $rel_schema->columns;
+
+            # all the associated relationships of this type with this $row
+            my @rels = $row->$rel_name; 
+
+            for my $rel (@rels) {
+                my $m2m_rel_property = { map { $_ => $rel->$_ } @rel_columns };
+
+                my $uri = $c->uri_for("/api/$rel_table/id/" . $rel->id)->as_string;
+                $m2m_rel_property->{link} = $uri;
+                $m2m_rel_property->{docs} = $c->uri_for("/docs/$rel_table")->as_string;
+                push @{$massaged{properties}{$rel_name}}, $m2m_rel_property;
+            }
+            $massaged{properties}{$rel_name} = [] unless scalar @{$massaged{properties}{$rel_name}};
+        }
+
+        # Add documentation link for the main entity type
         $massaged{docs} = $c->uri_for("/docs/$type")->as_string;
 
         push @massaged, \%massaged;
@@ -436,16 +468,20 @@ sub _get_properties {
 
     my $source = _type2table( $type );
     my $table_schema  = $c->model('WardrobeManagerApiDB')->source($source);
+    
     my @columns = map { { name => $_, is_rel => $table_schema->has_relationship($_) } } $table_schema->columns;
 
-    return \@columns;
+    my @m2m_rels    = map { (split /_/, $_)[1] } $table_schema->relationships;
+    @m2m_rels = (@m2m_rels) ? @m2m_rels : ();
+
+    return (\@columns, \@m2m_rels);
 }
 
 =head2 _process_search_params
 
 search options can come in the form of an arrayref (provided in the url)
 implementation allows to potentially provide search options as a hashref
-(comeing from a GUI ot CLI)
+(coming from a GUI ot CLI)
 
 allows for a direct or fuzzy search
 
