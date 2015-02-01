@@ -55,14 +55,14 @@ PROVIDED FUNCTIONALITY
 
 The application does not, currently, provide all the required functionality, and there is scope for improvement in what is provided.
 
-1) CRud for clothing/category/outfit ... search (by id and name) and creation so far
+1) CRud for clothing/category/outfit ... search (by id and name) and outfit (tagging) so far
 2) Retrieval of a list of clothes, their categories and associated outfits
 3) Tagging of clothes(clothing_outfit)
 4) clothing and categories can be created by uploading a CSV or JSON file. Format of the JSON file can be a hash or an array of hashes.
 
 DESIGN
 
-I took advantage of the boilerplate code offered by Catalyst and its RESTful controller. There are two RESTful controllers: Api and Tag,
+I took advantage of the boilerplate code offered by Catalyst and its base RESTful controller. There are two RESTful controllers: Api and Tag,
 and one library module with helper functions.
 
 CRud implementation is done through DBIC introspection, so the same code can be used for all entity types (clothing/category etc).
