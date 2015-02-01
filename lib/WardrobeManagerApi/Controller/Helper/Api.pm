@@ -17,6 +17,7 @@ use Lingua::EN::Inflect     qw(PL);
 use Scalar::Util            qw(blessed);
 use JSON                    qw(from_json);
 use Text::CSV::Auto;
+use URI::Escape;
 
 $ENV{DBIC_TRACE} = 1;
 
@@ -223,6 +224,7 @@ IN:     Catalyst object
         search parameters (arrayref)
 
 OUT:    hashref response
+
 =cut
 
 sub get_listing {
@@ -232,6 +234,7 @@ sub get_listing {
     my $source = _type2table( $type );
     eval {
         my $search_option = _process_search_params($c, $type, $params);
+
         @rows  = $c->model("WardrobeManagerApiDB::$source")
                    ->search( $search_option->{where},
                              $search_option->{join});
@@ -433,6 +436,16 @@ sub _get_properties {
     return \@columns;
 }
 
+=head2 _process_search_params
+
+search options can come in the form of an arrayref (provided in the url)
+implementation allows to potentially provide search options as a hashref
+(comeing from a GUI ot CLI)
+
+allows for a direct or fuzzy search
+
+=cut
+
 sub _process_search_params {
     my ($c, $type, $search_option) = @_;
 
@@ -447,7 +460,13 @@ sub _process_search_params {
 
     for my $column (@columns) {
         if (exists $search_option->{$column}) {
-            $where->{"me.$column"} = $search_option->{$column};
+            my $value = uri_unescape($search_option->{$column});
+            if ($value =~ /%/) {
+                $where->{"me.$column"} = { like => "$value" };
+            }
+            else {
+                $where->{"me.$column"} = $search_option->{$column};
+            }
         }
     }
     for my $field (keys $search_option) {

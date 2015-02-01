@@ -56,7 +56,6 @@ PROVIDED FUNCTIONALITY
 The application does not, currently, provide all the required functionality, and there is scope for improvement in what is provided.
 
 1) CRud for clothing/category/outfit ... search (by id and name) and creation so far
-                                                currently search by only full name, no fuzzy search 
 2) Retrieval of a list of clothes, their categories and associated outfits
 3) Tagging of clothes(clothing_outfit)
 4) clothing and categories can be created by uploading a CSV or JSON file. Format of the JSON file can be a hash or an array of hashes.
@@ -117,19 +116,17 @@ POST:
 
 LIMITATIONS
 
-1) No fuzzy search
-2) No unit tests
-3) Limited documentation
+1) No unit tests
+2) Limited documentation
 
 IMPROVEMENTS 
 
-1) Add fuzzy search
-2) Add crUD functionality (update/delete)
-3) When creating new entities, use find and create separately rather than find_or_create and output only created entities
-4) Write unit tests
-5) Add authentication/authorization
-6) Add caching to improve performace
-7) Add more POD
-8) Add versioning
-9) Could have used Try::Tiny
+1) Add crUD functionality (update/delete)
+2) When creating new entities, use find and create separately rather than find_or_create and output only created entities
+3) Write unit tests
+4) Add authentication/authorization
+5) Add caching to improve performace
+6) Add more POD
+7) Add versioning
+8) Could have used Try::Tiny
 
