@@ -93,7 +93,7 @@ __PACKAGE__->add_unique_constraint("name_uniq", ["name"]);
 
 __PACKAGE__->has_many(clothing_outfits => 'WardrobeManagerApi::Schema::WardrobeManagerApiDB::Result::ClothingOutfit',
                                           'outfit');
-__PACKAGE__->many_to_many(clothingss => 'clothing_outfits', 'clothing');
+__PACKAGE__->many_to_many(clothings => 'clothing_outfits', 'clothing');
 
 
 __PACKAGE__->meta->make_immutable;
