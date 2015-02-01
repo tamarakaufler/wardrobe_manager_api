@@ -39,7 +39,7 @@ Catalyst Controller.
 sub index :Path('/readme') :Args(0) {
     my ( $self, $c ) = @_;
 
-    my $content = read_file("$Bin/../README");   
+    my $content = read_file("$Bin/../README.md");   
     $c->response->body($content);
 }
 

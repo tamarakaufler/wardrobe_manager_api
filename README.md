@@ -1,6 +1,6 @@
 REQUIREMENTS
 
-Provide a RESTful web service with equivalent functionality as the Wardrobe Management web application with GUI.
+Provide a RESTful web service with equivalent functionality as the Wardrobe Management web application with GUI (in jeroboam repo).
 
 IMPLEMENTATION
 
@@ -42,6 +42,15 @@ MySQL
     To import the provided test data, if desired:
         mysql -u root -p import_data.sql
 
+DOCUMENTATION
+
+    curl -X GET  http://localhost:3010/readme
+
+    curl -X GET  http://localhost:3010/docs/clothing
+    curl -X GET  http://localhost:3010/docs/category
+    curl -X GET  http://localhost:3010/docs/outfit
+    curl -X GET  http://localhost:3010/docs/clothing_outfit
+
 PROVIDED FUNCTIONALITY
 
 The application does not, currently, provide all the required functionality, and there is scope for improvement in what is provided.
@@ -69,6 +78,7 @@ sample upload files are in sample_files dir on the same lever as the README file
 1) CRud for clothing/category/outfit ... search (by id and name) and creation so far
 
 GET:
+
     curl -X GET  http://localhost:3010/api/clothing/id/3
     curl -X GET  http://localhost:3010/api/clothing/outfit/3
     curl -X GET  http://localhost:3010/api/clothing/name/iRun%20White%20Trainers
@@ -104,7 +114,6 @@ POST:
 
         curl -X POST -F 'file=@incorrect_format.js'  http://localhost:3010/api/clothing
         curl -X POST -F 'file=@empty.csv'  http://localhost:3010/api/clothing
-
 
 LIMITATIONS
 
