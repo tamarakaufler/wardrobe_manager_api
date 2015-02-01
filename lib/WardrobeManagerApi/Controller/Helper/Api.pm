@@ -79,7 +79,7 @@ sub get_clothing_summary {
                               ->search({}, { prefetch => { 'category' }});
     
         while (my $clothing_data = $clothings_rs->next) {
-            push @$response_data, { clothing => $clothing_data->get_summary() }; 
+            push @$response_data, { clothing => $clothing_data->get_summary($c) }; 
         }
 
     };

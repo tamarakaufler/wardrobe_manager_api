@@ -128,22 +128,33 @@ __PACKAGE__->many_to_many(outfits => 'clothing_outfits', 'outfit');
 convenience method to access all instance related information
 
 IN:     Clothing object
+        Catalyst object
 OUT:    information massaged into a structure suitable for API output
 
 =cut
 
 sub get_summary {
-    my ($self) = @_;
+    my ($self, $c) = @_;
 
     my @outfits = $self->outfits();
     my $category = $self->category;
 
-    my $self_output = { id => $self->id, name => $self->name };
-    $self_output->{ category } = { id => $category->id, name => $category->name };
+    my $self_output = { id   => $self->id,
+                        name => $self->name,
+                        link => $c->uri_for("/api/clothing/id/" . $self->id)->as_string,
+                        docs => $c->uri_for("/docs/clothing")->as_string };
+
+    $self_output->{ category } = { id   => $category->id, 
+                                   name => $category->name,
+                                   link => $c->uri_for("/api/category/id/" . $category->id)->as_string,
+                                   docs => $c->uri_for("/docs/category")->as_string };
 
     my @outfit_output = (); 
     for my $outfit (@outfits) {
-        push @outfit_output, { id => $outfit->id, name => $outfit->name };
+        push @outfit_output, {  id   => $outfit->id,
+                                name => $outfit->name,
+                                link => $c->uri_for("/api/outfit/id/" . $outfit->id)->as_string,
+                                docs => $c->uri_for("/docs/outfit")->as_string };
     }
     $self_output->{ outfit } = \@outfit_output;
 
