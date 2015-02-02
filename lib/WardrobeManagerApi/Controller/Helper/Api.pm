@@ -440,8 +440,10 @@ sub _massage4output {
             my @rel_columns = $rel_schema->columns;
 
             # all the associated relationships of this type with this $row
+            
             my @rels = $row->$rel_name; 
 
+            $massaged{properties}{$rel_name} = [];
             for my $rel (@rels) {
                 my $m2m_rel_property = { map { $_ => $rel->$_ } @rel_columns };
 
@@ -450,7 +452,6 @@ sub _massage4output {
                 $m2m_rel_property->{docs} = $c->uri_for("/docs/$rel_table")->as_string;
                 push @{$massaged{properties}{$rel_name}}, $m2m_rel_property;
             }
-            $massaged{properties}{$rel_name} = [] unless scalar @{$massaged{properties}{$rel_name}};
         }
 
         # Add documentation link for the main entity type
