@@ -7,9 +7,9 @@ __PACKAGE__->config(
     schema_class => 'WardrobeManagerApi::Schema::WardrobeManagerApiDB',
     
     connect_info => {
-        dsn => 'dbi:mysql:wardrobeapi',
-        user => 'wardrobeapi',
-        password => 'funsecret',
+        dsn => 'dbi:mysql:wardrobe',
+        user => 'wardrobe',
+        password => 'StRaW101',
         mysql_enable_utf8 => 1,
     }
 );

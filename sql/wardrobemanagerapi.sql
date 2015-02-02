@@ -2,10 +2,10 @@
     -- Create mysql database with the relevant tables
     --
 
-    DROP DATABASE IF EXISTS wardrobeapi;
-    CREATE DATABASE IF NOT EXISTS wardrobeapi DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
+    DROP DATABASE IF EXISTS wardrobe;
+    CREATE DATABASE IF NOT EXISTS wardrobe DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
 
-    USE wardrobeapi;
+    USE wardrobe;
 
     DROP TABLE IF EXISTS clothing;
     DROP TABLE IF EXISTS category;
