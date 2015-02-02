@@ -97,7 +97,8 @@ POST:
     curl -X POST -T tagging2.json  http://localhost:3010/tag/clothing 
     curl -H "Accept: application/json" -H "Content-type: application/json" -X POST -d '{"clothing":"3", "outfit":"4"}'  http://localhost:3010/tag/clothing
 
-    Clothing and categories can be created by uploading a CSV or JSON file. Format of the JSON file can be a hash or an array of hashes. The file extension should correspond to its content:        
+    Clothing and categories can be created by uploading a CSV or JSON file. Format of the JSON file can be a hash
+    or an array of hashes. The file extension should correspond to its content:        
 
         curl -X POST -F 'file=@clothing.csv'  http://localhost:3010/api/clothing
                                         or
