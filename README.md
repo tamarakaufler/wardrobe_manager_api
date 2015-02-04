@@ -22,9 +22,6 @@ Required modules are listed in Makefile.PL and will be installed by running
 
 INSTALLATION
 
-Apart from the provided tarball, I can put, for the ease of inspecting the code and installing, the codebase on github under 
-some unconspicuous name like test_repo with an uninteresting README content, if preferred.
-
 Codebase:
 
     From tarball:
